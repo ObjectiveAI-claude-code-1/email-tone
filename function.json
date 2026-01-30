@@ -1,11 +1,25 @@
 {
   "type": "scalar.function",
-  "input_maps": null,
-  "description": "Placeholder function.",
+  "description": "Email Tone Scorer. Evaluates how appropriate an email's tone is for a given context.",
   "changelog": null,
   "input_schema": {
-    "type": "integer"
+    "type": "object",
+    "properties": {
+      "email": {
+        "type": "string",
+        "description": "The email text to evaluate."
+      },
+      "context": {
+        "type": "string",
+        "description": "Free-form description of the situation/audience (e.g., 'asking my boss for time off', 'following up with a client after a demo')."
+      }
+    },
+    "required": [
+      "email",
+      "context"
+    ]
   },
+  "input_maps": null,
   "tasks": [
     {
       "type": "vector.completion",
@@ -15,25 +29,20 @@
         {
           "role": "user",
           "content": {
-            "$jmespath": "join('',['How much do you like the number ',to_string(input),'?'])"
+            "$jmespath": "join('', ['Evaluate the tone of the following email given this context:\n\nContext: ', input.context, '\n\nEmail:\n\"\"\"', input.email, '\"\"\"\n\nHow appropriate is the tone for this context?'])"
           }
         }
       ],
       "tools": null,
       "responses": [
-        {
-          "$jmespath": "join('',['I REALLY LOVE the number ',to_string(input),'!'])"
-        },
-        {
-          "$jmespath": "join('',['Meh, ',to_string(input),' is okay I guess.'])"
-        },
-        {
-          "$jmespath": "join('',['I HATE the number ',to_string(input),'!'])"
-        }
+        "The tone is perfectly appropriate for this context",
+        "The tone is mostly appropriate with minor issues",
+        "The tone is somewhat inappropriate for this context",
+        "The tone is highly inappropriate for this context"
       ]
     }
   ],
   "output": {
-    "$jmespath": "add(tasks[0].scores[0],multiply(tasks[0].scores[1],`0.5`))"
+    "$jmespath": "add(add(tasks[0].scores[0], multiply(tasks[0].scores[1], `0.66`)), multiply(tasks[0].scores[2], `0.33`))"
   }
 }
